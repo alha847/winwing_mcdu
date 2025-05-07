@@ -15,6 +15,8 @@ Use on your own risk.
 
 # Findings
 
+* Reversed with MacBook M1 Pro, SimAppPro running in Win11 VM
+
 ## USB ids
 * vendor id 0x4098
 * product id when set to MCDU-32-CO-PILOT 0xbb3e
@@ -42,7 +44,70 @@ Use on your own risk.
 
 ## Buttons
 
+* Example data read via hid.read(): [1, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 4, 54, 4, 27, 4, 54, 4]
+* Values in the example in decimal
+* Byte numbers below correspond to example data, counting started with 1
+
+### Byte 2
+
+* 0x01: L1
+* 0x02: L2
+* 0x04: L3
+* 0x08: L4
+* 0x10: L5
+* 0x20: L6
+* 0x40: R1
+* 0x80: R2
+
+### Byte 3
+
+* 0x01: R3
+* 0x02: R4
+* 0x04: R5
+* 0x08: R6
+* 0x10: DIR
+* 0x20: PROG
+* 0x40: PERF
+* 0x80: INIT
+
+### Byte 4
+
+* 0x01: DATA
+* 0x02: "Empty" button right of DATA
+* 0x04: BRT
+* 0x08: F-PLN
+* 0x10: RAD NAV
+* 0x20: FUEL PRED
+* 0x40: SEC F-PLN
+* 0x80: ATC COMM
+
+### Byte 5
+
+* 0x01: MCDU MENU
+* 0x02: DIM
+* 0x04: AIR PORT
+* 0x08: "Empty" button right of AIR PORT
+* 0x10: Left arrow
+* 0x20: Top arrow
+* 0x40: Right arrow
+* 0x80: Bottom arrow
+
+### Byte 6
+
+* 0x01: 1
+* 0x02: 2
+* 0x04: 3
+* 0x08: 4
+* 0x10: 5
+* 0x20: 6
+* 0x40: 7
+* 0x80: 8
+
  ### Byte 7
+* 0x01: 9
+* 0x02: Point
+* 0x04: 0
+* 0x08: +/-
 * 0x10: A
 * 0x20: B
 * 0x40: C
@@ -54,6 +119,54 @@ Use on your own risk.
 * 0x02: F
 * 0x04: G
 * 0x08: H
-* 0x:10 I
+* 0x10: I
 * 0x20: J
+* 0x40: K
+* 0x80: L
 
+### Byte 9
+
+* 0x01: M
+* 0x02: N
+* 0x04: O
+* 0x08: P
+* 0x10: Q
+* 0x20: R
+* 0x40: S
+* 0x80: T
+
+### Byte 10
+
+* 0x01: U
+* 0x02: V
+* 0x04: W
+* 0x08: X
+* 0x10: Y
+* 0x20: Z
+* 0x40: /
+* 0x80: SP
+
+### Byte 11
+
+* 0x01: OVFY
+* 0x02: CLR
+
+* 0x04: W
+* 0x08: X
+* 0x10: Y
+* 0x20: Z
+* 0x40: /
+* 0x80: SP
+
+## Light sensors
+
+* Example data read via hid.read(): [1, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 4, 54, 4, 27, 4, 54, 4]
+* Example data read via hid.read(): [1, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, b18, b19, b20, b21, b22, b23, b24, b25]
+* Values in the example in decimal
+* Last eight bytes are related to the light sensors, as the values go down when the light sensors are covered and go up when they are uncovered
+* The values will not go up or down immediately, it will take some seconds
+* b18-b21 and b22-b25 have the same value, if "Light sensor axis data output switch" in SimAppPro is turned on
+* b18-b21 will be zero if the output switch is turned off, b22-b25 will still contain meaningful values
+* b18, b19, b22 and b23 probably related to left sensor
+* b20, etc. probably related to right sensor
+* It seems that the sensor value might range from 0 to at least 12*255, assumed formula for the left sensor: b19*255 + b18 
