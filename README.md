@@ -240,7 +240,6 @@ device.write([0xf2, 0x39, 0x65, 0x0, 0x34, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x
 * See section about regular characters for some basic info
 * some chars can have more than one byte to print the character itself, probably only special chars like the arrows affected
 * in this case the byte order is still the same, i.e. two bytes for the design, then two/three bytes for the character itself
-
 * c2 b0: degree circle
 * ce 94: open top triangle
 * e2 86 90: left arrow
