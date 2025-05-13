@@ -269,4 +269,4 @@ device.write([0xf2, 0x39, 0x65, 0x0, 0x34, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x
 ## Example image
 
 * Shows result of mcdu_set_text_test3.py according to commit id 7eb99b9
-* [Example image](./example_set_text_test3.png)
+* ![Example image](./example_set_text_test3.png)
