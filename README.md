@@ -265,3 +265,8 @@ device.write([0xf2, 0x39, 0x65, 0x0, 0x34, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x
     * 0x0f: Status (horizontal bar)
     * 0x10: FM2
 * Byte 9 value 0x01 LED on, value 0x00, LED off
+
+## Example image
+
+* Shows result of mcdu_set_text_test3.py according to commit id 7eb99b9
+* [Example image](./example_set_text_test3.png)
