@@ -235,7 +235,7 @@ device.write([0xf2, 0x39, 0x65, 0x0, 0x34, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x
 * Adding +0x016b to first two bytes changes font size from normal too small; no other options known
 * Adding +0x0021 to first two bytes changes font color; can be added two times, three times, etc. to switch from one color to the next one
 
-# Special characters
+### Special characters
 
 * See section about regular characters for some basic info
 * some chars can have more than one byte to print the character itself, probably only special chars like the arrows affected
