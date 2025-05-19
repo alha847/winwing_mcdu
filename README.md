@@ -2,7 +2,10 @@
 
 A lua script for the Winwing MCDU for the LR A333. 
 
-Status: Reverse engineering in progress.
+Status:
+* Reverse engineering almost completed
+* Preliminary version of LR A333 captain's MCDU lua script published: lra333_winwing_mcdu_driver.lua
+* To run the lua script, just download it, put it to the lua scripts folder in your xp12 installation and enjoy
 
 ## Installation and use of dev scrips
 
