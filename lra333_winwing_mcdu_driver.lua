@@ -18,6 +18,9 @@
 ----------------------- Datarefs -----------------------
 
 --sources: e.g. A333.systems.lua, A333.switches.lua
+--general
+dataref("integ_light_brightness", "sim/cockpit2/switches/instrument_brightness_ratio", "readonly", 13)
+dataref("capt_brightness", "sim/cockpit2/switches/instrument_brightness_ratio", "readonly", 6) --brightness of MCDU CAPT, 0...1
 --MCDU CAPTAIN
 --text all lines
 dataref("capt_text0", "sim/cockpit2/radios/indicators/fms_cdu1_text_line0", "readonly") 
@@ -388,6 +391,9 @@ dataref("capt_style13_23", "sim/cockpit2/radios/indicators/fms_cdu1_style_line13
 --MCDU OBSERVER
 
 cache_data={}
+--general
+cache_data["capt_brightness"] = 0
+cache_data["integ_light_brightness"] = 0
 --MCDU CAPT
 cache_data["capt_text0"] = ""
 cache_data["capt_text1"] = ""
@@ -425,17 +431,17 @@ btn_cpt["R6"] = {active = false, command="sim/FMS/ls_6r", byte = 4, bitval = 0x0
 btn_cpt["DIR"] = {active = false, command="sim/FMS/dir_intc", byte = 4, bitval = 0x10, last_active = false}
 btn_cpt["PROG"] = {active = false, command="sim/FMS/prog", byte = 4, bitval = 0x20, last_active = false}
 btn_cpt["PERF"] = {active = false, command="sim/FMS/perf", byte = 4, bitval = 0x40, last_active = false}
-btn_cpt["INIT"] = {active = false, command="", byte = 4, bitval = 0x80, last_active = false} --todo add command
+btn_cpt["INIT"] = {active = false, command="sim/FMS/index", byte = 4, bitval = 0x80, last_active = false}
 btn_cpt["DATA"] = {active = false, command="sim/FMS/data", byte = 5, bitval = 0x01, last_active = false}
 --empty
---bright
-btn_cpt["FPLN"] = {active = false, command="sim/FMS/legs", byte = 5, bitval = 0x08, last_active = false}--todo not working
+btn_cpt["BRT"] = {active = false, command="laminar/A333/buttons/fms1_brightness_up", byte = 5, bitval = 0x04, last_active = false} --press&hold not implemented in the sim
+btn_cpt["FPLN"] = {active = false, command="sim/FMS/fpln", byte = 5, bitval = 0x08, last_active = false}
 btn_cpt["RAD_NAV"] = {active = false, command="sim/FMS/navrad", byte = 5, bitval = 0x10, last_active = false}
 btn_cpt["FUEL_PRED"] = {active = false, command="sim/FMS/fuel_pred", byte = 5, bitval = 0x20, last_active = false}
 --sec: not implemented in the sim
 --atc: not implemented in the sim
 btn_cpt["MENU"] = {active = false, command="sim/FMS/menu", byte = 6, bitval = 0x01, last_active = false}
---dim --todo laminar/A333/buttons/fms1_brightness_up
+btn_cpt["DIM"] = {active = false, command="laminar/A333/buttons/fms1_brightness_dn", byte = 6, bitval = 0x02, last_active = false} --press&hold not implemented in the sim
 btn_cpt["AIR_PORT"] = {active = false, command="sim/FMS/airport", byte = 6, bitval = 0x04, last_active = false}
 --empty
 btn_cpt["ARROW_LEFT"] = {active = false, command="sim/FMS/prev", byte = 6, bitval = 0x10, last_active = false} 
@@ -530,6 +536,31 @@ end
 
 ----------------------- LCDs -----------------------
 
+--Set brightness of LCD display. Input 0...1
+function setDisplayBrightness(winwing_hid_dev)
+
+    local newBrightVal = capt_brightness
+
+    --Open connection to USB device
+    --local winwing_hid_dev = hid_open(0x4098, winwing_device.product_id)
+
+    hid_write(winwing_hid_dev, 0x02, 0x32, 0xbb, 0x00, 0x00, 0x03, 0x49, 0x01, round(0xff*newBrightVal), 0x00, 0x00, 0x00, 0x00, 0x00)
+
+    --Close connection
+    --hid_close(winwing_hid_dev)
+
+end
+
+--Set brightness of button backlight. Input 0...1
+--todo can be done smarter, cf. fcu script
+function setButtonBacklight(winwing_hid_dev)
+
+    local newBrightVal = integ_light_brightness
+
+    hid_write(winwing_hid_dev, 0x02, 0x32, 0xbb, 0x00, 0x00, 0x03, 0x49, 0x00, round(0xff*newBrightVal), 0x00, 0x00, 0x00, 0x00, 0x00)
+
+end
+
 colorMap = {}
 colorMap[0] = 0 --black
 colorMap[1] = 3 --cyan
@@ -583,7 +614,7 @@ function prepareStyle(rawStyle)
         return 0
     end
 
-    print("rawStyle = "..rawStyle)
+    --print("rawStyle = "..rawStyle)
 
     --If highest bit is zero, then use small font
     if not isBitSet(rawStyle, 0x80) then
@@ -809,7 +840,7 @@ end
 
 function syncCaptLcd(winwining_hid_device)
 
-    print("syncCaptLcd()...")
+    --print("syncCaptLcd()...")
 
     --debug
     --print("capt_text4 = ")
@@ -901,12 +932,9 @@ function init_winwing_device()
         if (not isEmpty(winwing_device)) then 
             logMsg("found device")
             winwing_device["product_id"] = device.product_id
-            updateCaptCache()
-            --updateEfislCache() --todo needed?
-            --updateEfisrCache()
+            updateCaptTextCache()
+            updateGeneralCache()
             initLcd()
-            --clear_all_button_assignments() --todo clear all button assignments to avoid potential duplicates; todo might clear joystick assignments as well
-            --lcd_init() --Apparently not needed, thus deactivated
             break
         end
 
@@ -1026,15 +1054,14 @@ function updateGeneralCache()
 
     local numChanges = 0
 
-    if (cache_data["bus1_volts"] ~= bus1_volts) then cache_data["bus1_volts"] = bus1_volts numChanges = numChanges + 1 end
-    if (cache_data["bus2_volts"] ~= bus2_volts) then cache_data["bus2_volts"] = bus2_volts numChanges = numChanges + 1 end
-    if (cache_data["annun_light_switch_pos"] ~= annun_light_switch_pos) then cache_data["annun_light_switch_pos"] = annun_light_switch_pos numChanges = numChanges + 1 end
-
+    if (cache_data["capt_brightness"] ~= capt_brightness) then cache_data["capt_brightness"] = capt_brightness numChanges = numChanges + 1 end
+    if (cache_data["integ_light_brightness"] ~= integ_light_brightness) then cache_data["integ_light_brightness"] = integ_light_brightness numChanges = numChanges + 1 end
+    
     return (numChanges > 0)
 
 end
 
-function updateCaptCache()
+function updateCaptTextCache()
 
     local numChanges = 0
 
@@ -1072,17 +1099,30 @@ function syncDeviceAndSim()
         sync_switches(currentDeviceData)
     end
 --
-    ----Sync LEDs and LCDs from XP12 to Winwing MCDU CAPT
-    if(updateCaptCache()) then
+    ----Sync MCDU text from XP12 to Winwing MCDU CAPT
+    if(updateCaptTextCache()) then
 
         --logMsg("Updating MCDU CAPT...")
+
+        
 
         --syncFcuAnnunLeds(winwing_hid_dev)
         syncCaptLcd(winwing_hid_dev)
     end
 
+    --Sync other elements, e.g. annuncator LEDs, display brightness
+    if(updateGeneralCache()) then
+
+        --print("capt_brightness = "..capt_brightness)
+
+        setDisplayBrightness(winwing_hid_dev)
+        setButtonBacklight(winwing_hid_dev)
+
+    end
+
     --Close connection
     hid_close(winwing_hid_dev)
+   
    
 end
 
